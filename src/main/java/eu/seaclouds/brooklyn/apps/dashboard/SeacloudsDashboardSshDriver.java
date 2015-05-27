@@ -1,9 +1,8 @@
-package org.apache.brooklyn.seaclouds;
+package eu.seaclouds.brooklyn.apps.dashboard;
 
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.lifecycle.ScriptHelper;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
@@ -54,42 +53,18 @@ public class SeacloudsDashboardSshDriver extends JavaSoftwareProcessSshDriver im
     public void customize() {
         log.debug("Customizing {}", entity);
         Networking.checkPortsValid(MutableMap.of("dashboardPort", getPort()));
-        ScriptHelper customizeScript = newScript(CUSTOMIZING)
+        newScript(CUSTOMIZING)
                 .body.append(
                         format("cp -R %s/* .", getInstallDir()),
                         format("mkdir %s/seaclouds-dashboard", getRunDir())
-                );
-        customizeScript.gatherOutput(true);
-        int res = customizeScript.execute();
-
+                ).execute();
     }
 
     @Override
     public void launch() {
         newScript(MutableMap.of(USE_PID_FILE, getPidFile()), LAUNCHING)
                 .failOnNonZeroResultCode()
-                .body.append(
-                format("nohup java " + 
-                                "-Ddeployer.endpoint=%s " +
-                                "-Ddeployer.username=%s " +
-                                "-Ddeployer.password=%s " +
-                                "-Dmonitor.endpoint=%s " +
-                                "-Dplanner.endpoint=%s " +
-                                "-Dsla.endpoint=%s " +
-                                "-Ddw.server.applicationConnectors[0].port=%s " +
-                                "-Ddw.server.adminConnectors[0].port=%s " + 
-                                "-jar dashboard.jar server " +
-                                "> %s 2>&1 &",
-                        entity.getConfig(SeacloudsDashboard.DEPLOYER_ENDPOINT),
-                        entity.getConfig(SeacloudsDashboard.DEPLOYER_USERNAME),
-                        entity.getConfig(SeacloudsDashboard.DEPLOYER_PASSWORD),
-                        entity.getConfig(SeacloudsDashboard.MONITOR_ENDPOINT),
-                        entity.getConfig(SeacloudsDashboard.PLANNER_ENDPOINT),
-                        entity.getConfig(SeacloudsDashboard.SLA_ENDPOINT),
-                        entity.getAttribute(SeacloudsDashboard.DASHBOARD_PORT),
-                        entity.getAttribute(SeacloudsDashboard.DASHBOARD_ADMIN_PORT),
-                        getLogFileLocation()))
-                .execute();
+                .body.append(getEnvCommand(), getCommandWithoutSysprops()).execute();
 
         String mainUri = format("http://%s:%d", 
                 entity.getAttribute(Attributes.HOSTNAME), 
@@ -97,6 +72,53 @@ public class SeacloudsDashboardSshDriver extends JavaSoftwareProcessSshDriver im
         entity.setAttribute(Attributes.MAIN_URI, URI.create(mainUri));
     }
 
+    private String getEnvCommand() {
+        return format("export " +
+                        "DEPLOYER_ENDPOINT=%s " +
+                        "DEPLOYER_USERNAME=%s " +
+                        "DEPLOYER_PASSWORD=%s " +
+                        "MONITOR_ENDPOINT=%s " +
+                        "PLANNER_ENDPOINT=%s " +
+                        "SLA_ENDPOINT=%s ",
+                        entity.getConfig(SeacloudsDashboard.DEPLOYER_ENDPOINT),
+                        entity.getConfig(SeacloudsDashboard.DEPLOYER_USERNAME),
+                        entity.getConfig(SeacloudsDashboard.DEPLOYER_PASSWORD),
+                        entity.getConfig(SeacloudsDashboard.MONITOR_ENDPOINT),
+                        entity.getConfig(SeacloudsDashboard.PLANNER_ENDPOINT),
+                        entity.getConfig(SeacloudsDashboard.SLA_ENDPOINT));
+    }
+
+    private String getCommandWithoutSysprops() {
+        return getCommand(false);
+    }
+    
+    private String getCommand(boolean withSysprops) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("nohup java ");
+        if (withSysprops) {
+            sb.append(format("-Ddeployer.endpoint=%s " +
+                            "-Ddeployer.username=%s " +
+                            "-Ddeployer.password=%s " +
+                            "-Dmonitor.endpoint=%s " +
+                            "-Dplanner.endpoint=%s " +
+                            "-Dsla.endpoint=%s " +
+                    entity.getConfig(SeacloudsDashboard.DEPLOYER_ENDPOINT),
+                    entity.getConfig(SeacloudsDashboard.DEPLOYER_USERNAME),
+                    entity.getConfig(SeacloudsDashboard.DEPLOYER_PASSWORD),
+                    entity.getConfig(SeacloudsDashboard.MONITOR_ENDPOINT),
+                    entity.getConfig(SeacloudsDashboard.PLANNER_ENDPOINT),
+                    entity.getConfig(SeacloudsDashboard.SLA_ENDPOINT)));
+        }
+        sb.append(format("-Ddw.server.applicationConnectors[0].port=%s " +
+                        "-Ddw.server.adminConnectors[0].port=%s " +
+                        "-jar dashboard.jar server " +
+                        "> %s 2>&1 &",
+                entity.getAttribute(SeacloudsDashboard.DASHBOARD_PORT),
+                entity.getAttribute(SeacloudsDashboard.DASHBOARD_ADMIN_PORT),
+                getLogFileLocation()));
+        return sb.toString();
+    }
+    
     public String getPidFile() {
         return Os.mergePathsUnix(getRunDir(), "seaclouds-dashboard.pid");
     }

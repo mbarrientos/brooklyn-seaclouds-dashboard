@@ -21,6 +21,7 @@
     </parent>
 
     <properties>
+        <project.entry>eu.seaclouds.brooklyn.apps.SeacloudsMain</project.entry>
     </properties>
 
     <dependencies>
@@ -80,7 +81,17 @@
                     <descriptors>
                         <descriptor>src/main/assembly/assembly.xml</descriptor>
                     </descriptors>
+                    <finalName>brooklyn-seaclouds-dashboard</finalName>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>build-distribution-archive</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

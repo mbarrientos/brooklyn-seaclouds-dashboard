@@ -1,4 +1,4 @@
-package org.apache.brooklyn.seaclouds;
+package eu.seaclouds.brooklyn.apps.dashboard;
 
 import brooklyn.entity.basic.SoftwareProcessImpl;
 

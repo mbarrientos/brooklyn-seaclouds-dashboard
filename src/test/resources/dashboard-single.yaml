@@ -1,0 +1,8 @@
+name: SeaClouds Platform
+location: localhost
+services:
+- type: eu.seaclouds.brooklyn.apps.dashboard.SeacloudsDashboard
+  name: Dashboard
+  brooklyn.config: 
+    port: 8000
+    adminPort: 8001

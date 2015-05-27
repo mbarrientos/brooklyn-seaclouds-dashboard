@@ -1,4 +1,4 @@
-package org.apache.brooklyn.seaclouds;
+package eu.seaclouds.brooklyn.apps.dashboard;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
@@ -8,6 +8,7 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
+import brooklyn.location.basic.PortRanges;
 import brooklyn.util.flags.SetFromFlag;
 
 @Catalog(name = "SeaClouds Dashboard", description = "SeaClouds Dashboard", iconUrl =
@@ -23,13 +24,13 @@ public interface SeacloudsDashboard extends SoftwareProcess, HasShortName {
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey(
             SoftwareProcess.DOWNLOAD_URL, "https://www.dropbox.com/s/y1qwy16d9lf64a9/dashboard.jar");
 
-    @SetFromFlag("dashboardPort")
+    @SetFromFlag("port")
     PortAttributeSensorAndConfigKey DASHBOARD_PORT = new PortAttributeSensorAndConfigKey(
-            "seaclouds.dashboard.port", "", 8000);
+            "seaclouds.dashboard.port", "", PortRanges.fromInteger(8000));
 
-    @SetFromFlag("dashboardAdminPort")
+    @SetFromFlag("adminPort")
     PortAttributeSensorAndConfigKey DASHBOARD_ADMIN_PORT = new PortAttributeSensorAndConfigKey(
-            "seaclouds.dashboard.adminPort", "", 8001);
+            "seaclouds.dashboard.adminPort", "", PortRanges.fromInteger(8001));
     
     @SetFromFlag("deployer.endpoint")
     ConfigKey<String> DEPLOYER_ENDPOINT = 
